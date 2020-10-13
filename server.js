@@ -26,8 +26,8 @@ protocol = 'http://',
   MongoClient = require('mongodb'),
   authMechanism = 'DEFAULT',
   //mongoUrl = f('mongodb://localhost:27017/')
-   mongoUrl = f('mongodb+srv://dbMohit:Sangeeta!123@clustvapor.f2ktt.gcp.mongodb.net/Vara?retryWrites=true&w=majority');
-
+   //mongoUrl = f('mongodb+srv://dbMohit:Sangeeta!123@clustvapor.f2ktt.gcp.mongodb.net/Vara?retryWrites=true&w=majority');
+mongoUrl = f('mongodb+srv://vaporinterface:vt0iJDfoBWztddOV@cluster0.9e6oi.mongodb.net/TestVapor?retryWrites=true&w=majority');
 dbName = 'Vapor',
   nodemailer = require('nodemailer');
 var storage = multer.diskStorage({
