@@ -141,6 +141,63 @@ const express = require('express'),
                 
                 res.send(JSON.stringify("your personal details is updated"))
               },
+           
+             ChangePersonalpwd:(req, res, db, MongoClient)=>{
+                if(!req.body.userId){
+                  throw "you do not selsect user ID"
+                }
+                let userId = req.body.userId,
+                    CurrentPwd = req.body.CurrentPwd,
+                    NewPwd = req.body.NewPwd,
+                    ConfNewPwd = req.body.ConfNewPwd,
+                    user;
+                 if(CurrentPwd && NewPwd && ConfNewPwd && NewPwd == ConfNewPwd){
+                   db.collection('Client_detail').find({
+                    _id: new MongoClient.ObjectID(req.body.userId)
+                    })
+                  .toArray((err, result) => {
+                    if (err) {
+                      res.end();
+                      throw err;
+                    }
+                    console.log(result);
+                    if (result.length && result[0].pwd != CurrentPwd){
+                      let error = {
+                        code: 0,
+                        msg: 'Current pasword not matched,Please check current password'
+                      };
+                      
+                      res.send(JSON.stringify(error));
+                    } else {
+                      user = result[0];
+                      db.collection('Client_detail').updateMany({
+                        _id: new MongoClient.ObjectID(req.body.userId)
+                       },{
+                         $set:{
+                          "pwd": req.body.ConfNewPwd,
+                         }}, {
+                          multi: true
+                        });
+                       let success = {
+                        code: 1,
+                        msg: 'password change successfully',
+                      };
+                     res.send(JSON.stringify(success))
+                    }
+                    
+                  });  
+                 }else{
+                     let error = {
+                        code: 0,
+                        msg: 'Some key is missing please check.'
+                      };
+                      if(NewPwd != ConfNewPwd){
+                        error.msg = "New password and confirm new password not matched"; 
+                      }
+                      res.send(JSON.stringify(error)); 
+                 }
+               
+              },
               
               FetchBusinessInfo:(req, res, db, MongoClient)=>{
                 db.collection('Business_detail').find({userId:new MongoClient.ObjectID(req.body.userId)}).toArray((err, result)=>{

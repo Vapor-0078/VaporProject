@@ -110,6 +110,7 @@ app.use(express.static('Vapor_Backend'));
         app.post('/SignIn', (req, res)=> application.SignIn(req, res, db, MongoClient));
         app.post('/SignOut', (req, res)=> application.SignOut(req, res, db, MongoClient));
         app.post('/UpdatPersonalInfo', (req, res)=> application.UpdatPersonalInfo(req, res, db, MongoClient));
+        app.post('/ChangePersonalpwd', (req, res)=> application.ChangePersonalpwd(req, res, db, MongoClient));
         app.post('/FetchPersonalInfo', (req, res)=> application.FetchPersonalInfo(req, res, db, MongoClient));
 
         app.post('/FetchBusinessInfo', (req, res)=> application.FetchBusinessInfo(req, res, db, MongoClient));
