@@ -198,6 +198,143 @@ const express = require('express'),
                  }
                
               },
+          SendOtp:(req, res, db, MongoClient,transporter)=>{
+                if(!req.body.Mobile){
+                  throw "please enter mobile no."
+                }
+                let Mobile = req.body.Mobile,
+                    Place_use = req.body.Place_use,
+                    user;
+                 if(Mobile){
+                   db.collection('Client_detail').find({"MobileNo":Mobile})
+                  .toArray((err, result) => {
+                    if (err) {
+                      res.end();
+                      throw err;
+                    }
+                    console.log(result);
+
+                    if(Place_use==1 || (Place_use==2 && result.length)){
+                      var http = require("https");
+                      var options = {
+                      "method": "GET",
+                      "hostname": "api.msg91.com",
+                      "port": null,
+                      "path": "/api/v5/otp?extra_param=%7B%22Param1%22%3A%22Value1%22%2C%20%22Param2%22%3A%22Value2%22%2C%20%22Param3%22%3A%20%22Value3%22%7D&unicode=&authkey=344724AiwcRehS5f899fb9P1&template_id=5f89dcdbd6fa743036097b94&mobile=91"+Mobile+"&invisible=1&otp_length=4",
+                      "headers": {
+                      "content-type": "application/json"
+                      }
+                      };
+
+                      var reqs = http.request(options, function (ress) {
+                      var chunks = [];
+
+                      ress.on("data", function (chunk) {
+                      chunks.push(chunk);
+                      });
+
+                      ress.on("end", function () {
+                      var body = Buffer.concat(chunks);
+                      console.log(body.toString());
+                      var results = JSON.parse(body.toString());
+                            
+                        if(results.type=="success"){
+                          if(Place_use==1){
+                            var success = {
+                              code: 1,
+                              msg: 'OTP send successfully.',
+                            };
+                          }else{
+                            user = result[0];
+                            var success = {
+                              code: 1,
+                              data: {userId: user._id,mobileno: user.MobileNo},
+                              msg: 'OTP send successfully For reset Password.',
+                            };
+                          }
+                          res.send(JSON.stringify(success))
+                        }else{
+                          let error = {
+                              code: 0,
+                              msg: 'OTP Not send.',
+                            };
+                            res.send(JSON.stringify(error))
+                          }
+                      });
+                      });
+                      reqs.end();
+                    }else{
+                      let error = {
+                        code: 0,
+                        msg: 'User not exit.',
+                      };
+                      res.send(JSON.stringify(error))
+                    }
+                    
+                  });  
+                 }else{
+                     let error = {
+                        code: 0,
+                        msg: 'Some key is missing please check.'
+                      };
+                      res.send(JSON.stringify(error)); 
+                 }
+               
+              },
+          
+          VerifyVaporOtp:(req, res, db, MongoClient)=>{
+
+                let vaporsmsOtp = req.body.vaporsmsOtp,
+                    Mobile = req.body.Mobile;
+                 if(vaporsmsOtp && Mobile){
+                      var http = require("https");
+
+                      var options = {
+                        "method": "POST",
+                        "hostname": "api.msg91.com",
+                        "port": null,
+                        "path": `/api/v5/otp/verify?otp_expiry=&mobile=91${Mobile}&otp=${vaporsmsOtp}&authkey=344724AiwcRehS5f899fb9P1`,
+                        "headers": {}
+                      };
+
+                      var reqs = http.request(options, function (ress) {
+                      var chunks = [];
+
+                      ress.on("data", function (chunk) {
+                      chunks.push(chunk);
+                      });
+
+                      ress.on("end", function () {
+                      var body = Buffer.concat(chunks);
+                      console.log(body.toString());
+                      var result = JSON.parse(body.toString());
+                            
+                        if(result.type=="success"){
+                            let success = {
+                                code: 1,
+                                msg: 'OTP verify successfully.',
+                              };
+                          res.send(JSON.stringify(success))
+                        }else{
+                          let error = {
+                              code: 0,
+                              msg: result.message,
+                            };
+                            res.send(JSON.stringify(error))
+                          }
+                      });
+                      });
+
+                      reqs.end(); 
+                 }else{
+                     let error = {
+                        code: 0,
+                        msg: 'Please enter Otp or enter mobile number.'
+                      };
+                      res.send(JSON.stringify(error)); 
+                 }
+               
+              },
               
               FetchBusinessInfo:(req, res, db, MongoClient)=>{
                 db.collection('Business_detail').find({userId:new MongoClient.ObjectID(req.body.userId)}).toArray((err, result)=>{
