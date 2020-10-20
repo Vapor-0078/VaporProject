@@ -275,6 +275,13 @@ const express = require('express'),
                         });
                        let success = {
                         code: 1,
+                        data : {
+                          name: user.name,
+                          email: user.email,
+                          country: user.country,
+                          mobile_no : user.MobileNo,
+                          userId: user._id,
+                          Signature:user.Signature},
                         msg: 'password reset successfully',
                       };
                      res.send(JSON.stringify(success))
