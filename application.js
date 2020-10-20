@@ -13,10 +13,21 @@ const express = require('express'),
 
       module.exports = {
         SignUp: async(req, res, db, MongoClient)=>{
-            db.collection('Client_detail').find({
-                email: req.body.email,
-                role: 2
-              })
+            let mobile_no = req.body.Mobile,
+                email_id = req.body.email,
+                pwd = req.body.pwd,
+                params_data;
+            if(mobile_no){
+              params_data = {
+                MobileNo: mobile_no,
+                role: 2};
+            }else{
+              params_data = {
+                email: email_id,
+                role: 2};
+            }
+            if(((mobile_no && mobile_no.length==10) || email_id) && pwd.length>=8){
+            db.collection('Client_detail').find(params_data)
                 .toArray((err, result) => {
                   if (err) {
                     res.end();
@@ -25,13 +36,14 @@ const express = require('express'),
                   if (result.length) {
                     res.send(JSON.stringify({
                       code: 0,
-                      msg: 'E-mail already exists in the system'
+                      msg: `${mobile_no?'Mobile-no':'E-mail'} already exists in the system`
                     }));
                   } else {
                     db.collection('Client_detail')
                       .insertOne({
                         "name" : req.body.name,
                         "email" : req.body.email,
+                        "country":req.body.country,
                         "MobileNo": req.body.Mobile,
                         "pwd": req.body.pwd,
                         "datetime":new Date(Date.now()).toISOString().split('.')[0],
@@ -49,6 +61,7 @@ const express = require('express'),
                             .insertOne({
                                 "name" : req.body.name,
                                 "email" : req.body.email,
+                                "country":req.body.country,
                                 "MobileNo": req.body.Mobile,
                                 "role": 2,
                                 "userId":new MongoClient.ObjectID(result.insertedId),
@@ -64,51 +77,82 @@ const express = require('express'),
                                 "Description":"profile photo",
                                 "userId":new MongoClient.ObjectID(result.insertedId)
                             });
+                          
                           res.send(JSON.stringify({res: 'You are registered successfully'}));
                         }
                       });
                   }
                 }); 
+              }else{
+                let error = {
+                  code: 0,
+                  msg: 'some requirement data is missing.'
+                };
+                if(!mobile_no && !email_id){
+                  error.msg = `Please Enter ${req.body.country != 'India'?'Email':'Mobile-no'}`; 
+                }else if(mobile_no && mobile_no.length != 10 ){
+                  error.msg = `Please Enter 10 digit mobile no.`; 
+                }else if(pwd.length<8){
+                  error.msg = `Please Enter minimum 8 character password.`; 
+                }
+                res.send(JSON.stringify(error));
+              }
             },
 
             SignIn: (req, res, db , MongoClient) => {
-                let Mobile = req.body.Mobile,
+                let Mobile_no = req.body.Mobile,
+                    email_id = req.body.email,
                     pwd = req.body.pwd,
-                    user;
-                console.log(req.cookies);
-                db.collection('Client_detail').find({"MobileNo":Mobile})
-                  .toArray((err, result) => {
-                    if (err) {
-                      res.end();
-                      throw err;
-                    }
-                    console.log(result);
-                    if (!result.length) {
+                    user,
+                    paramsdata;
+                if(Mobile_no){
+                  paramsdata = {"MobileNo":Mobile_no};
+                }else{
+                  paramsdata = {"email":email_id};
+                }
+                if(Mobile_no || email_id){
+                  db.collection('Client_detail').findOne(paramsdata, function(err, result) {
+                    if (err) throw err;
+                    let success = {
+                      code: 1,
+                      msg: result
+                    };
+                    if(!result){
                       let error = {
-                        code: 0,
-                        msg: 'No user with such number registered'
-                      };
-                      res.send(JSON.stringify(error));
-                    } else {
-                      user = result[0];
+                              code: 0,
+                              msg: `No user with such ${Mobile_no?'number':'email'} registered`
+                            };
+                            res.send(JSON.stringify(error));
+                    }else{
+                      user = result;
                       if (pwd == user.pwd) {
-                        res.cookie('uid', Math.random().toString().substring(2), { maxAge: 31536000000, httpOnly: true });
-                        res.send(JSON.stringify({
-                          name: user.name,
-                          email: user.email,
-                          userId: user._id,
-                          Signature:user.Signature
-                        }));
-                      } else {
-                        let error = {
-                          code: 1,
-                          msg: 'Make sure you have entered the right password'
-                        };
-                        res.send(JSON.stringify(error));
-                      }
+                          res.cookie('uid', Math.random().toString().substring(2), { maxAge: 31536000000, httpOnly: true });
+                          res.send(JSON.stringify({
+                            name: user.name,
+                            email: user.email,
+                            country: user.country,
+                            mobile_no : user.MobileNo,
+                            userId: user._id,
+                            Signature:user.Signature
+                          }));
+                        } else {
+                          let error = {
+                            code: 1,
+                            msg: 'Make sure you have entered the right password'
+                          };
+                          res.send(JSON.stringify(error));
+                        }
                     }
-                    
                   });
+                }else{
+                  let error = {
+                    code: 0,
+                    msg: 'some key is missiong'
+                  };
+                  res.send(JSON.stringify(error));
+                }
+                
+
               },
 
               UpdatPersonalInfo:(req, res, db, MongoClient)=>{
@@ -198,6 +242,61 @@ const express = require('express'),
                  }
                
               },
+          
+          ForgotpwdUpdate:(req, res, db, MongoClient)=>{
+                if(!req.body.userId){
+                  throw "you do not selsect user ID"
+                }
+                let userId = req.body.userId,
+                    NewPwd = req.body.NewPwd,
+                    ConfNewPwd = req.body.ConfNewPwd,
+                    user;
+                 if(NewPwd && ConfNewPwd && NewPwd == ConfNewPwd && ConfNewPwd.length>=8 && NewPwd.length>=8){
+
+                    db.collection('Client_detail').findOne({ _id: new MongoClient.ObjectID(userId)}, function(err, result) {
+                      if (err) throw err;
+                    console.log(result);
+                    if (!result){
+                      let error = {
+                        code: 0,
+                        msg: 'user not exit in system'
+                      };
+
+                      res.send(JSON.stringify(error));
+                    } else {
+                      user = result;
+                      db.collection('Client_detail').updateMany({
+                        _id: new MongoClient.ObjectID(userId)
+                       },{
+                         $set:{
+                          "pwd": req.body.ConfNewPwd,
+                         }}, {
+                          multi: true
+                        });
+                       let success = {
+                        code: 1,
+                        msg: 'password reset successfully',
+                      };
+                     res.send(JSON.stringify(success))
+                    }
+                    
+                  });  
+                 }else{
+                     let error = {
+                        code: 0,
+                        msg: 'Some key is missing please check.'
+                      };
+                      if(NewPwd != ConfNewPwd){ 
+                        error.msg = "New password and confirm new password not matched"; 
+                      }
+                      if(NewPwd.length<8 ||ConfNewPwd.length<8){
+                        error.msg = "Password Enter minimum 8 characters."; 
+                      }
+                      res.send(JSON.stringify(error)); 
+                 }
+               
+              },
+          
           SendOtp:(req, res, db, MongoClient,transporter)=>{
                 if(!req.body.Mobile){
                   throw "please enter mobile no."
@@ -330,6 +429,124 @@ const express = require('express'),
                      let error = {
                         code: 0,
                         msg: 'Please enter Otp or enter mobile number.'
+                      };
+                      res.send(JSON.stringify(error)); 
+                 }
+               
+              },
+          
+          
+          SendEmailOtp:(req, res, db, MongoClient,transporter)=>{
+
+                let email_id = req.body.email,
+                    place_use = req.body.place_use; 
+                 if(email_id && place_use){
+                  db.collection('Client_detail').findOne({email:email_id}, function(err, result) {
+                    if (err) throw err;
+                    var user_data = result;
+                    var otp_value = Math.floor(1000 + Math.random() * 9000);
+                    var verification_token = new Date(Date.now()).getTime()+otp_value;
+                    
+                    console.log()
+                    //res.send(JSON.stringify(success)); 
+                    if(place_use ==1 || (place_use==2 && user_data)){
+                    transporter.sendMail({
+                      from: {
+                        name: 'Vapor InterFace OTP',  
+                        address: 'noreply@gmail.com'
+                      },
+                        to: email_id,
+                        subject: 'Vapor Interface OTP '+ Math.floor(10 + Math.random() * 90),
+                        // text: 'Tapestry: Exclusive offer! Here is the promo code: ' + weChatCouponCode,
+                        html: `<p>Welcome to vaporInterface:</p> 
+                               <p>Your Email- Verification OTP is : <b><i>${otp_value}</i></b></p>`
+                    }, (err, info) => {
+                        if (err) {
+                            console.log(err);
+                            let error_res = {
+                              code: 0,
+                              msg: "email otp not send please retry;"
+                            };
+                            res.send(JSON.stringify(error_res));         
+                        } else {
+                          db.collection('Email_otps')
+                          .insertOne({
+                            "email" :email_id,
+                            "verification_token":verification_token.toString(),
+                            "otp":otp_value.toString()
+                          }, (err, result) => {
+                            let success = {
+                              code: 1,
+                              data : {
+                                "email" :email_id,
+                                "verification_token":verification_token.toString()
+                              },
+                              msg: "Otp send please check your mail."
+                            };
+                            place_use==2?success.data.UserId=user_data._id:'';
+                            res.send(JSON.stringify(success)); 
+                          });
+
+                        }
+                    });
+                      
+                  }else{
+                    let error = {
+                      code: 0,
+                      msg: place_use==2?'user not exit in our system':'some key is missing'
+                    };
+                    res.send(JSON.stringify(error)); 
+                  }
+
+                  });
+                  
+                 }else{
+                     let error = {
+                        code: 0,
+                        msg: 'some key is missiong.'
+                      };
+                      res.send(JSON.stringify(error)); 
+                 }
+               
+              },
+
+              VerifyEmailOtp:(req, res, db, MongoClient)=>{
+
+                let email_id = req.body.email,
+                    email_verification_token = req.body.verification_token,
+                    otp_value = req.body.otp,
+                    params_data; 
+                 if(email_id && email_verification_token,otp_value){
+                   params_data = {
+                     email : email_id,
+                     verification_token : email_verification_token,
+                     otp : otp_value
+                   }
+                  db.collection('Email_otps').findOne(params_data, function(err, result) {
+                    if (err) throw err;
+                    var otp_user_data = result;
+
+                  if(otp_user_data){
+                    db.collection('Email_otps').deleteOne( { "_id" : new MongoClient.ObjectID(otp_user_data._id) } );
+                      let success = {
+                              code: 1,
+                              msg: "Email Otp verify successfully."
+                            };
+                      res.send(JSON.stringify(success)); 
+                  }else{
+                    let error = {
+                      code: 0,
+                      msg: 'Please Enter valid OTP'
+                    };
+                    res.send(JSON.stringify(error)); 
+                  }
+
+                  });
+                  
+                 }else{
+                     let error = {
+                        code: 0,
+                        msg: 'some key is missiong.'
                       };
                       res.send(JSON.stringify(error)); 
                  }

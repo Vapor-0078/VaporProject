@@ -62,11 +62,13 @@ let smtpAuth;
 //   user: 'sangeetaverma9211@gmail.com',
 //   pass: 'Sangeeta@123'
 // }
+smtpAuth = {
+    user: 'developer.amityadav@gmail.com',
+    pass: 'Love@143'
+  }
 
 let smtpConfig = {
-  host: 'smtp.1and1.com',
-  port: 587,
-  secure: false,
+  service: 'Gmail',
   auth: smtpAuth
 };
 let transporter = nodemailer.createTransport(smtpConfig);
@@ -105,14 +107,18 @@ app.use(express.static('Vapor_Backend'));
       MongoClient.connect(mongoUrl, (err, client) => {     
         assert.equal(null, err);
         db = client.db(dbName);
-
-       app.post('/SignUp', (req, res)=> application.SignUp(req, res, db, MongoClient));
+          
+        app.post('/SignUp', (req, res)=> application.SignUp(req, res, db, MongoClient));
         app.post('/SignIn', (req, res)=> application.SignIn(req, res, db, MongoClient));
         app.post('/SignOut', (req, res)=> application.SignOut(req, res, db, MongoClient));
         app.post('/UpdatPersonalInfo', (req, res)=> application.UpdatPersonalInfo(req, res, db, MongoClient));
         app.post('/ChangePersonalpwd', (req, res)=> application.ChangePersonalpwd(req, res, db, MongoClient));
         app.post('/SendOtp', (req, res)=> application.SendOtp(req, res, db, MongoClient,transporter));
         app.post('/VerifyVaporOtp', (req, res)=> application.VerifyVaporOtp(req, res, db, MongoClient));
+        app.post('/SendEmailOtp', (req, res)=> application.SendEmailOtp(req, res, db, MongoClient,transporter));
+        app.post('/VerifyEmailOtp', (req, res)=> application.VerifyEmailOtp(req, res, db, MongoClient));
+        app.post('/ForgotpwdUpdate', (req, res)=> application.ForgotpwdUpdate(req, res, db, MongoClient));
+          
         app.post('/FetchPersonalInfo', (req, res)=> application.FetchPersonalInfo(req, res, db, MongoClient));
 
         app.post('/FetchBusinessInfo', (req, res)=> application.FetchBusinessInfo(req, res, db, MongoClient));
