@@ -33,7 +33,8 @@ const express = require('express'),
                     res.end();
                     throw err;
                   }
-                  if (result.length) {
+                var dev = 1;
+                  if (result.length && dev==0) {
                     res.send(JSON.stringify({
                       code: 0,
                       msg: `${mobile_no?'Mobile-no':'E-mail'} already exists in the system`
