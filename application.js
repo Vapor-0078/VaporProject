@@ -79,7 +79,19 @@ const express = require('express'),
                                 "userId":new MongoClient.ObjectID(result.insertedId)
                             });
                           
-                          res.send(JSON.stringify({res: 'You are registered successfully'}));
+                          let success = {
+                              code: 1,
+                              data : {
+                                name: req.body.name,
+                                email: req.body.email,
+                                country: req.body.country,
+                                mobile_no : req.body.Mobile,
+                                userId: result.insertedId,
+                                Signature:result.signature,
+                              },
+                              msg: 'You are registered successfully',
+                            };
+                           res.send(JSON.stringify(success));
                         }
                       });
                   }
