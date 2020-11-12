@@ -5,6 +5,11 @@ const base_response = require("../_helpers/base_response").response;
 MongoClient = require('mongodb');
 
 
+// stocks test route
+router.get("/test-sock-api", (req, res) => {
+  res.status(200).json(base_response('ok',{},'test api running successfully'));
+});
+
 // add new item to stock
 router.post("/add-new-item-stock", (req, res) => {
   const db = getDb();
