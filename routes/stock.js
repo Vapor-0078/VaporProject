@@ -77,6 +77,7 @@ router.post("/update-item-stock", (req, res) => {
           
           update_data.item  =  req.body.item;
           update_data.description = req.body.description;
+          update_data.units = req.body.units;
           update_data.HSN = req.body.HSN;
           update_data.stock = req.body.initialStock;
           update_data.initialStock = req.body.initialStock;
@@ -88,6 +89,7 @@ router.post("/update-item-stock", (req, res) => {
       }else if (req.body.type === "services") {
           update_data.item = req.body.item;
           update_data.description = req.body.description;
+          update_data.units = req.body.units;
           update_data.SAC =  req.body.SAC;
           update_data.salesPrice = Number(req.body.salesPrice);
           update_data.tax = req.body.tax;
@@ -111,9 +113,21 @@ router.post("/update-item-stock", (req, res) => {
 
 // get all the item stock based on the userid id....
 router.get("/get-all-item-stock", (req, res) => {
+  let paramsdata;
+  if(req.query.type==="all"){
+    paramsdata ={"UserID": new MongoClient.ObjectID(req.query.UserID)};
+  }else if(req.query.type==="goods"){
+    paramsdata ={"UserID": new MongoClient.ObjectID(req.query.UserID),
+                 "type":"goods"};
+  }else if(req.query.type==="services"){
+    paramsdata = {"UserID": new MongoClient.ObjectID(req.query.UserID),
+    "type":"services"};
+  }else{
+    res.json(base_response(0,{},'something is missing.'));
+  }
   const db = getDb();
   db.collection("stock")
-    .find({"UserID": new MongoClient.ObjectID(req.query.UserID)})
+    .find(paramsdata)
     .toArray((err, result) => {
       if (result.length === 0) {
         res.json(base_response(0,{},'Item socks not available.'));
