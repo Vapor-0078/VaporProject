@@ -10,6 +10,13 @@ const express = require('express'),
   fs = require('fs'),
   path = require('path'),
   url = require('url');
+
+const initDb =  require('./_helpers/db').initDb;
+const getDb = require("./_helpers/db").getDb;
+
+
+const stockRoute = require("./routes/stock");
+
 nodemailer = require('nodemailer');
 
 const port = process.env.PORT || 5000;
@@ -103,10 +110,14 @@ app.use(bodyParser.urlencoded({limit: '10mb', extended: true}))
 
 app.use(express.static('uploads'));
 app.use(express.static('Vapor_Backend'));
+app.use("/api/stock", stockRoute);
 
-      MongoClient.connect(mongoUrl, (err, client) => {     
-        assert.equal(null, err);
-        db = client.db(dbName);
+
+   initDb(function (err) {
+    db = getDb();
+//      MongoClient.connect(mongoUrl, (err, client) => {     
+//        assert.equal(null, err);
+//        db = client.db(dbName);
           
         app.post('/SignUp', (req, res)=> application.SignUp(req, res, db, MongoClient));
         app.post('/SignIn', (req, res)=> application.SignIn(req, res, db, MongoClient));
