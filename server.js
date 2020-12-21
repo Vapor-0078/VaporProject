@@ -16,6 +16,7 @@ const getDb = require("./_helpers/db").getDb;
 
 
 const stockRoute = require("./routes/stock");
+const purchaseRoute = require("./routes/purchase");
 
 nodemailer = require('nodemailer');
 
@@ -111,6 +112,7 @@ app.use(bodyParser.urlencoded({limit: '10mb', extended: true}))
 app.use(express.static('uploads'));
 app.use(express.static('Vapor_Backend'));
 app.use("/api/stock", stockRoute);
+app.use("/api/purchase", purchaseRoute);
 
 
    initDb(function (err) {
