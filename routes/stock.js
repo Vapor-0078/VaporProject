@@ -138,21 +138,6 @@ router.get("/get-all-item-stock", (req, res) => {
 });
 
 
-// get all the item stock based on the userid id....
-router.get("/get-all-item-stock", (req, res) => {
-  const db = getDb();
-  db.collection("stock")
-    .find({"UserID": new MongoClient.ObjectID(req.query.UserID)})
-    .toArray((err, result) => {
-      if (result.length === 0) {
-        res.json(base_response(0,{},'Item socks not available.'));
-      } else {
-        res.json(base_response(1,result,'All the stocks loaded successfully'));
-      }
-    });
-});
-
-
 // get single the item stock based on the sock id....
 router.get("/get-single-item-stock", (req, res) => {
   const db = getDb();
