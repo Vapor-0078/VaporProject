@@ -14,10 +14,6 @@ const express = require('express'),
 const initDb =  require('./_helpers/db').initDb;
 const getDb = require("./_helpers/db").getDb;
 
-
-const stockRoute = require("./routes/stock");
-const purchaseRoute = require("./routes/purchase");
-
 nodemailer = require('nodemailer');
 
 const port = process.env.PORT || 5000;
@@ -71,8 +67,8 @@ let smtpAuth;
 //   pass: 'Sangeeta@123'
 // }
 smtpAuth = {
-    user: 'developer.amityadav@gmail.com',
-    pass: 'Love@143'
+    user: '',
+    pass: ''
   }
 
 let smtpConfig = {
@@ -111,9 +107,6 @@ app.use(bodyParser.urlencoded({limit: '10mb', extended: true}))
 
 app.use(express.static('uploads'));
 app.use(express.static('Vapor_Backend'));
-app.use("/api/stock", stockRoute);
-app.use("/api/purchase", purchaseRoute);
-
 
    initDb(function (err) {
     db = getDb();
